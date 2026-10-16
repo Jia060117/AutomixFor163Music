@@ -207,7 +207,7 @@ async function transition(pair,plan){
 }
 try{
   client=await connectPlayer();const installed=await client.evaluate(fs.readFileSync(path.join(here,'frontend-probe.js'),'utf8'));
-  if(await client.evaluate('automixProbe.version')!==27)throw Error('旧版 Automix 控制进程仍在运行，请先停止它再启动新版');
+  if(await client.evaluate('automixProbe.version')!==28)throw Error('旧版 Automix 控制进程仍在运行，请先停止它再启动新版');
   controllerToken=(await client.evaluate('automixProbe.claimController()')).token;original=installed.snapshot;
   controllerTimer=setInterval(()=>{client.evaluate(`automixProbe.renewController(${JSON.stringify(controllerToken)})`).catch(()=>{recordError('Controller heartbeat failed; stopping');stopping=true;});},10000);
   originalPosition=(await client.evaluate('automixProbe.readStoredPosition()')).value;

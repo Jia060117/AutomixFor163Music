@@ -12,7 +12,7 @@ const ctx=vm.createContext({window,navigator:{userAgent:'Test'},performance:{now
 vm.runInContext(fs.readFileSync('src/automix/frontend-probe.js','utf8'),ctx);const p=window.automixProbe;
 (async()=>{
   let checks=0;
-  assert.equal(selected,0);assert.equal(p.version,27);checks++;
+  assert.equal(selected,0);assert.equal(p.version,28);checks++;
   let pair=p.readPlaybackPair();assert.equal(pair.next.resourceId,'1041');assert.equal(pair.queueLength,55);assert.equal(pair.dynamicQueue,true);assert.equal(pair.queueSource,'playingList.curPlayingList');assert.equal(pair.modeLabel,'心动模式');assert.equal(p.inspect().snapshot.queue.length,30);checks++;
   // Recommendations inserted ahead of the preanalysed song must invalidate it.
   state.playingList.curPlayingList.push({resourceId:'9999',displayOrder:40.5,scene:'aiMode',track:{id:'9999',name:'new recommendation',duration:180000}});
@@ -27,7 +27,7 @@ vm.runInContext(fs.readFileSync('src/automix/frontend-probe.js','utf8'),ctx);con
   await assert.rejects(p.selectNextAndWait({nextResourceId:'x'}),/Invalid expected/);assert.equal(selected,1);checks++;
   const owner=p.claimController();assert(p.controllerStatus().active);assert(p.ownsController(owner.token));assert.throws(()=>p.claimController(),/已有 Automix/);assert.throws(()=>p.dispose(),/active Automix/);checks++;
   assert.throws(()=>p.releaseController('wrong'),/does not match/);assert.throws(()=>p.renewController('wrong'),/ownership lost/);assert(p.ownsController(owner.token));checks++;
-  p.version=24;vm.runInContext(fs.readFileSync('src/automix/frontend-probe.js','utf8'),ctx);assert.equal(window.automixProbe,p);assert.equal(p.version,24);p.version=27;checks++;
+  p.version=24;vm.runInContext(fs.readFileSync('src/automix/frontend-probe.js','utf8'),ctx);assert.equal(window.automixProbe,p);assert.equal(p.version,24);p.version=28;checks++;
   clockOffset+=59000;p.renewController(owner.token);clockOffset+=2000;assert(p.ownsController(owner.token));clockOffset+=61000;assert.equal(p.controllerStatus().active,false);assert.throws(()=>p.renewController(owner.token),/ownership lost/);checks++;
   const second=p.claimController();assert.equal(p.ownsController(owner.token),false);assert.equal(p.releaseController(second.token),true);assert.equal(p.controllerStatus().active,false);checks++;
   console.log(JSON.stringify({passed:true,checks,selectorCalls,tests:['current playback queue differs from source playlist','full queue beyond 30 preview items','native selector with current queue entry','dynamic insertion invalidates stale prepared B before dispatch','guarded selection preserves heart mode and recommendation metadata','playId and mode changes rejected','correct lowercase playOrder supported','shuffle/FM/single loop still rejected','native selector used at queue boundary','missing current and malformed pair rejected']}));

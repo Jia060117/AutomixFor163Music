@@ -57,7 +57,7 @@ def main():
     temp=BUILD/'compiler-temp';temp.mkdir(exist_ok=True)
     subprocess.run(command,check=True,env=dict(os.environ,TEMP=str(temp),TMP=str(temp)))
     report={'file':exe.name,'bytes':exe.stat().st_size,'sha256':sha(exe.read_bytes()),'payloadSha256':sha(packed),
-        'runtimeFiles':len(files),'uncompressedBytes':sum(map(len,files.values())),'architecture':'Windows x64','publisher':'Jia060117','version':'0.1.0'}
+        'runtimeFiles':len(files),'uncompressedBytes':sum(map(len,files.values())),'architecture':'Windows x64','publisher':'Jia060117','version':'0.1.1'}
     try:report['sourceCommit']=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,stderr=subprocess.DEVNULL,text=True).strip()
     except (OSError,subprocess.CalledProcessError):report['sourceCommit']=None
     (DIST/'build-report.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')

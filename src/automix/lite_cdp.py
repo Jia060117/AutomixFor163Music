@@ -82,8 +82,11 @@ def inspect_player():
  import pathlib,datetime
  here=pathlib.Path(__file__).resolve().parent;c=None
  try:
-  c=Player();c.evaluate((here/'frontend-probe.js').read_text(encoding='utf-8'))
-  value=c.evaluate("(()=>{const s=automixProbe.inspect().snapshot;let pair,reason;try{pair=automixProbe.readPlaybackPair();}catch(e){reason=e.message;}return {state:s.playingState,current:s.current?.name,next:pair?.next?.name,queueMode:pair?.mode,queueModeLabel:pair?.modeLabel,queueSource:pair?.queueSource,queueLength:pair?.queueLength,volume:s.audioSettings?.playingVolume,position:automixProbe.readStoredPosition().value,queueReady:!!pair,controllerBusy:automixProbe.controllerStatus().active,reason};})()")
+  c=Player()
+  try:
+   c.evaluate((here/'frontend-probe.js').read_text(encoding='utf-8'))
+   value=c.evaluate("(()=>{const info=automixProbe.inspect(),s=info.snapshot;if(!s)return {queueReady:false,clientVersion:info.clientVersion,reason:info.error||'播放器正在加载，请稍后重试。'};let pair,position,reason;try{pair=automixProbe.readPlaybackPair();position=automixProbe.readStoredPosition().value;}catch(e){reason=e.message;}return {clientVersion:info.clientVersion,state:s.playingState,current:s.current?.name,next:pair?.next?.name,queueMode:pair?.mode,queueModeLabel:pair?.modeLabel,queueSource:pair?.queueSource,queueLength:pair?.queueLength,volume:s.audioSettings?.playingVolume,position,queueReady:!!pair&&!reason,controllerBusy:automixProbe.controllerStatus().active,reason};})()")
+  except Exception as error:value=dict(queueReady=False,reason='已连接网易云，但播放器接口检查失败：'+str(error).splitlines()[0][:200])
   return dict(value,connected=True,checkedUtc=datetime.datetime.now(datetime.timezone.utc).isoformat(),profileExists=RENDER_PROFILE.exists())
  except Exception:return dict(connected=False,queueReady=False,reason='未连接到网易云本地控制端口 19222。请点击连接网易云。')
  finally:

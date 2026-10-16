@@ -164,7 +164,7 @@ sealed class MainForm : Form {
         SetupLabel(count,"本次交接  0",20,286,150,20,9,muted);SetupButton(folder,"运行记录 ↗",194,282,106,27,false);
         SetupLabel(hint,"先在网易云播放音乐，然后点击开始。",20,316,280,28,9,muted);
         logs.Visible=false;logs.SetBounds(20,350,280,22);logs.Anchor=AnchorStyles.Left|AnchorStyles.Right|AnchorStyles.Top;logs.Multiline=true;logs.ReadOnly=true;logs.BorderStyle=BorderStyle.None;logs.BackColor=bg;logs.ForeColor=muted;logs.TabStop=false;Controls.Add(logs);
-        tips.SetToolTip(modeButton,"持续模式等待歌尾；快速测试会跳到歌尾，完成后恢复原歌曲和进度。");tips.SetToolTip(stop,"停止混音，并等待网易云恢复音量和播放状态。");tips.SetToolTip(connect,"未连接时，可启动或重启网易云 3.1.40 并启用本地控制端口。");
+        tips.SetToolTip(modeButton,"持续模式等待歌尾；快速测试会跳到歌尾，完成后恢复原歌曲和进度。");tips.SetToolTip(stop,"停止混音，并等待网易云恢复音量和播放状态。");tips.SetToolTip(connect,"未连接时，可启动或重启网易云 3.1.40 / 3.1.41 并启用本地控制端口。");
         start.Enabled=false;stop.Enabled=false;connect.Enabled=false;
         start.Click+=async(s,e)=>await Perform(async()=>{await StartMix();});stop.Click+=async(s,e)=>await Perform(async()=>{await backend.Request("/api/stop",new{});});
         connect.Click+=async(s,e)=>await Perform(ConnectPlayer);folder.Click+=(s,e)=>System.Diagnostics.Process.Start(new ProcessStartInfo("explorer.exe",Program.Quote(Program.DataRoot)) { UseShellExecute=true });
@@ -196,7 +196,7 @@ sealed class MainForm : Form {
         var p=Obj(state,"player");bool running=Flag(state,"running"),connected=Flag(p,"connected");
         track.Text=Str(p,"current","网易云未连接");next.Text="下一首  "+Str(p,"next","—");
         var names=new Dictionary<string,string>{{"idle","待机"},{"checking","检查连接"},{"preparing","分析下一组歌曲"},{"waiting","已就绪 · 等待歌尾"},{"mixing","正在混音"},{"warming","下一首静音预跑"},{"handoff","平滑交接音量"},{"verifying","已交接 · 验证中"},{"stopping","正在停止并恢复"},{"error","本次运行已结束"}};string code=Str(state,"stage","idle");stage.Text=names.ContainsKey(code)?names[code]:code;
-        queue.Text=connected?Str(p,"queueModeLabel","播放列表")+" · "+Str(p,"queueLength","—")+" 首":"支持网易云 3.1.40 · 点击连接";count.Text="本次交接  "+Str(state,"transitions","0");
+        queue.Text=connected?Str(p,"queueModeLabel","播放列表")+" · "+Str(p,"queueLength","—")+" 首":"支持网易云 3.1.40 / 3.1.41 · 点击连接";count.Text="本次交接  "+Str(state,"transitions","0");
         if(!action){hint.ForeColor=muted;hint.Text=running?"最小化到托盘后仍会继续运行。":!connected?"点击连接，可启动或重启网易云并开启本地控制。":Flag(p,"controllerBusy")?"另一控制进程正在运行，请先停止它。":!Flag(p,"queueReady")?Str(p,"reason","请使用顺序、列表循环或心动模式。"):Str(p,"state")!="playing"?"先在网易云播放音乐，然后点击开始。":"已连接。按网易云右侧播放列表自动衔接。";}
         object raw;if(state.TryGetValue("logs",out raw)&&raw is object[]){var entries=(object[])raw;logs.Text=String.Join(Environment.NewLine,entries.Skip(Math.Max(0,entries.Length-1)).Select(v=>Str(v as Dictionary<string,object>,"message")));}
         tips.SetToolTip(hint,hint.Text);UpdateControls();
@@ -204,7 +204,7 @@ sealed class MainForm : Form {
     async Task ConnectPlayer(){
         await backend.Request("/api/check",new{});await RefreshState();if(Flag(Obj(state,"player"),"connected"))return;
         if(MessageBox.Show(this,"需要启动或重启网易云音乐，并开启仅本机可访问的控制端口。当前播放会中断，登录信息和歌单会保留。\n\n现在连接吗？","连接网易云",MessageBoxButtons.OKCancel,MessageBoxIcon.Information)!=DialogResult.OK)return;
-        string exe=FindNetease();if(FileVersionInfo.GetVersionInfo(exe).FileVersion!="3.1.40.205461")throw new IOException("当前仅验证了网易云 3.1.40.205461。请使用该版本。");
+        string exe=FindNetease();string version=FileVersionInfo.GetVersionInfo(exe).FileVersion;if(!SupportedNetease(version))throw new IOException("当前网易云版本为 "+version+"。已适配 3.1.40.205461 和 3.1.41.205564，请使用其中一个版本。");
         var socket=new TcpClient();try {var pending=socket.ConnectAsync("127.0.0.1",19222);if(await Task.WhenAny(pending,Task.Delay(500))==pending&&socket.Connected)throw new IOException("控制端口 19222 被占用，请先退出使用该端口的程序。");}catch(SocketException){}finally{socket.Close();}
         foreach(var process in System.Diagnostics.Process.GetProcessesByName("cloudmusic")){using(process){string actual;try{actual=process.MainModule.FileName;}catch{continue;}if(!String.Equals(actual,exe,StringComparison.OrdinalIgnoreCase))continue;try{process.CloseMainWindow();}catch{}}}
         await Task.Delay(1200);
@@ -215,8 +215,9 @@ sealed class MainForm : Form {
         for(int i=0;i<25;i++){await Task.Delay(800);await backend.Request("/api/check",new{});await RefreshState();if(Flag(Obj(state,"player"),"connected"))return;}
         throw new IOException("网易云已启动，暂未找到播放器。请等待窗口加载后再次点击连接。");
     }
+    static bool SupportedNetease(string version){return version=="3.1.40.205461"||version=="3.1.41.205564";}
     string FindNetease(){
-        foreach(var p in System.Diagnostics.Process.GetProcessesByName("cloudmusic")){using(p){try{var file=p.MainModule.FileName;if(File.Exists(file)&&FileVersionInfo.GetVersionInfo(file).FileVersion=="3.1.40.205461")return file;}catch{}}}
+        foreach(var p in System.Diagnostics.Process.GetProcessesByName("cloudmusic")){using(p){try{var file=p.MainModule.FileName;if(File.Exists(file)&&SupportedNetease(FileVersionInfo.GetVersionInfo(file).FileVersion))return file;}catch{}}}
         foreach(var file in new[]{@"C:\Program Files\NetEase\CloudMusic\cloudmusic.exe",@"C:\Program Files (x86)\NetEase\CloudMusic\cloudmusic.exe",Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"NetEase","CloudMusic","cloudmusic.exe")})if(File.Exists(file))return file;
         using(var dialog=new OpenFileDialog{Title="选择网易云 cloudmusic.exe",Filter="网易云音乐|cloudmusic.exe",CheckFileExists=true}){if(dialog.ShowDialog(this)==DialogResult.OK)return dialog.FileName;}
         throw new IOException("未选择网易云音乐。");

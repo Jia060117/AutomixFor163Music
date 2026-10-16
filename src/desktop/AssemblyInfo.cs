@@ -6,5 +6,5 @@ using System.Reflection;
 [assembly: AssemblyCompany("情绪零碎の佳 / Jia060117")]
 [assembly: AssemblyProduct("AutomixFor163Music")]
 [assembly: AssemblyCopyright("Copyright © 2026 情绪零碎の佳 (Jia060117)")]
-[assembly: AssemblyVersion("0.1.0.0")]
-[assembly: AssemblyFileVersion("0.1.0.0")]
+[assembly: AssemblyVersion("0.1.1.0")]
+[assembly: AssemblyFileVersion("0.1.1.0")]

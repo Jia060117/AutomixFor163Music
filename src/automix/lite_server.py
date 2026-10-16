@@ -35,7 +35,7 @@ class Panel:
    elif e=='B-unmuted':self.state['stage']='verifying';self.log(e,'已恢复下一首音量。')
    elif e=='controller-memory':self.state['transitions']+=1;self.state['stage']='preparing'
    elif e=='measurement':
-    b=m.get('BhandoffVerification') or {};self.state['measurement']=dict(valid=m['valid'],Bvalid=b.get('valid',m['valid']),Bresidual=b.get('timelineResidualMilliseconds',m.get('timelineShiftMilliseconds',{}).get('mix_to_B')));self.log(e,'波形交接验证'+('通过' if self.state['measurement']['Bvalid'] else '未通过'))
+    b=m.get('BhandoffVerification') or {};self.state['measurement']=dict(valid=m['valid'],Bvalid=b.get('valid',m['valid']),Bresidual=b.get('timelineResidualMilliseconds',(m.get('timelineShiftMilliseconds') or {}).get('mix_to_B')));self.log(e,'波形交接验证'+('通过' if self.state['measurement']['Bvalid'] else '未通过'))
    elif e=='fallback':self.log(e,m['message'])
    elif e=='queue-handoff-recovered':self.state['stage']='preparing';self.log(e,'播放列表已变化，恢复当前歌曲并重新准备。')
  def start(self,body):

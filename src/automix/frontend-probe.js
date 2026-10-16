@@ -6,7 +6,7 @@
  */
 (() => {
   'use strict';
-  if (window.automixProbe?.version === 27) {
+  if (window.automixProbe?.version === 28) {
     const previous = window.automixProbe.inspect();
     if (previous.snapshot || window.automixProbe.controllerStatus?.().active) return previous;
     // The probe may have loaded before the player store entered webpack's
@@ -24,6 +24,14 @@
     queue.push([[id], { [id]: (module, exports, require) => { runtime = require; } }, [[id]]]);
   }
   const cache = runtime && runtime.c;
+  // These bindings are verified per desktop build. Unknown client versions
+  // must not reuse module numbers from a different build.
+  const clientVersion = /NeteaseMusicDesktop\/([\d.]+)/i.exec(navigator.userAgent)?.[1] || null;
+  const bindingsByVersion = {
+    '3.1.40.205461': {selector:163,progress:111,quality:38,adjust:57,refresh:75,rights:33},
+    '3.1.41.205564': {selector:176,progress:148,quality:41,adjust:59,refresh:86,rights:34}
+  };
+  const bindings = bindingsByVersion[clientVersion || '3.1.40.205461'];
   let sdk, bridge, storeApi;
   let sourceModule, sourceModuleId;
   const preparedSources = new Map();
@@ -70,6 +78,7 @@
     } catch (_) {}
   }
   function state() {
+    if (!bindings) throw new Error('尚未适配网易云 ' + clientVersion + '；请使用 3.1.40.205461 或 3.1.41.205564。');
     if (!storeApi) throw new Error('The loaded player store was not found. Use the main renderer after the application has loaded.');
     return storeApi.getStore();
   }
@@ -109,7 +118,7 @@
       nativeChannelPresent: !!(window.channel && window.channel.call),
       webpackCaptured: !!cache, cachedModuleCount: Object.keys(cache || {}).length,
       audioPlayerSdkFound: !!sdk, bridgeFound: !!bridge, storeCandidates: candidates,
-      sourceModuleFound:!!sourceModule,sourceModuleId,
+      sourceModuleFound:!!sourceModule,sourceModuleId,clientVersion,clientSupported:!!bindings,
       snapshot, error, note: 'Control success is recorded by the calling test, not inferred from interface presence.' };
   }
   function dispatch(action, payload) {
@@ -154,7 +163,7 @@
     }
   }
   window.automixProbe = {
-    version: 27,
+    version: 28,
     controllerStatus() {return {active:controllerActive(),remainingMilliseconds:controllerLease?Math.max(0,controllerLease.expiresAt-performance.now()):0};},
     claimController() {
       if(controllerActive()||recoveryLease)throw new Error('已有 Automix 控制进程运行中，请先停止它');
@@ -256,7 +265,7 @@
       if(!['playCycle','playOrder','PlayOrder','playAi'].includes(p.playingMode))throw new Error('请选择列表循环、顺序播放或心动模式；随机、单曲循环和 FM 暂未适配');
       if(!p.playId||p.isLoadingFirst)throw new Error('Current playback instance is still loading');
       const current=list.find(item=>String(item.resourceId)===String(p.curPlaying?.resourceId));
-      const selector=cache?.[163]?.exports?.a;
+      const selector=cache?.[bindings.selector]?.exports?.a;
       if(!current||typeof selector!=='function')throw new Error('Current playback queue next-track selector unavailable');
       const next=selector(p.playingMode,list,current,1);
       if(!next||String(next.resourceId)===String(current.resourceId))throw new Error('Two distinct queued tracks required');
@@ -290,11 +299,19 @@
       }finally{bridge.removeRegisterCall('AudioData','audioplayer',callback);await toggle(false);}
     },
     readStoredPosition() {
-      const subject=cache?.[111]?.exports?.b;
-      if(typeof subject?.getValue!=='function')throw new Error('Player progress subject unavailable');
-      const value=subject.getValue();
+      const playing=state().playing,progress=cache?.[bindings.progress]?.exports?.b;
+      let value;
+      if(clientVersion==='3.1.41.205564'){
+        if(typeof progress!=='function')throw new Error('Player progress getter unavailable');
+        const sample=progress();
+        if(!playing.playId||String(sample?.playId)!==String(playing.playId))throw new Error('播放器进度尚未就绪，请先播放一首歌曲。');
+        value=sample.current;
+      }else{
+        if(typeof progress?.getValue!=='function')throw new Error('Player progress subject unavailable');
+        value=progress.getValue();
+      }
       if(!Number.isFinite(value)||value<0)throw new Error('Player progress value is invalid');
-      return {playId:state().playing.playId,value,source:'Player progress subject',note:'UI progress, not measured speaker position'};
+      return {playId:playing.playId,value,source:clientVersion==='3.1.41.205564'?'Player progress getter':'Player progress subject',note:'UI progress, not measured speaker position'};
     },
     readPosition() {
       const playId = state().playing.playId;
@@ -460,7 +477,7 @@
       const item=s.playingList.curPlayingList.find(x=>String(x.resourceId)===String(resourceId));
       if(!item)throw new Error('Only tracks already in the current queue can be analysed.');
       if(typeof refresh!=='boolean')throw new Error('Refresh must be boolean');
-      const qualityApi=cache[38]?.exports,qualityAdjust=cache[57]?.exports;
+      const qualityApi=cache[bindings.quality]?.exports,qualityAdjust=cache[bindings.adjust]?.exports;
       if(typeof qualityApi?.e!=='function'||typeof qualityAdjust?.b!=='function')throw new Error('Normal quality policy modules unavailable.');
       const setting=s.setting.quantity;
       const rawQuality=qualityApi.e(s.host.isAnonymous?setting.listenAnon:setting.listenReg);
@@ -469,7 +486,7 @@
         // The ordinary factory can restore an expired URL from native disk cache.
         // Use the client's existing RPC refresh option, then seed its source cache
         // with that unmodified response; the factory still evaluates normal policy.
-        const api=cache[75]?.exports,rights=cache[33]?.exports;
+        const api=cache[bindings.refresh]?.exports,rights=cache[bindings.rights]?.exports;
         if(typeof api?.a!=='function'||!api.a.toString().includes('skipLocalRpcCache')||typeof rights?.l!=='function'||typeof rights?.g!=='function'||typeof sourceModule.g?.set!=='function')throw new Error('Normal source refresh unavailable');
         const id=item.trackId ?? item.track?.id ?? item.resourceId;
         const fresh=await api.a({ids:id,soundQuality:quality,trialMode:item.fromInfo?.trialMode},true);
