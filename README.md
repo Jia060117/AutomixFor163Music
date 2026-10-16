@@ -98,6 +98,10 @@ python tools/build.py
 
 本项目由 **情绪零碎の佳（[Jia060117](https://github.com/Jia060117)）** 发布，采用 **GNU GPL v2 或任何后续版本（GPL-2.0-or-later）**。修改和再发布时，请保留版权与许可声明，并按 GPL 提供对应源码与构建材料。详见 [LICENSE](LICENSE)。
 
-感谢 [Rubber Band](https://github.com/breakfastquay/rubberband)、[QuickJS](https://bellard.org/quickjs/)、[Python](https://www.python.org/)、[NumPy](https://numpy.org/)、[7-Zip LZMA SDK](https://www.7-zip.org/sdk.html) 和 [Zig](https://ziglang.org/) 等项目。**完整的版本、用途、上游作者、许可、修改情况与参考来源见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)**，其中还列出 NumPy wheel 和编译工具带入的运行库。
+感谢 [Rubber Band](https://github.com/breakfastquay/rubberband)、[QuickJS](https://bellard.org/quickjs/)、[Python](https://www.python.org/)、[NumPy](https://numpy.org/)、[7-Zip LZMA SDK](https://www.7-zip.org/sdk.html) 和 [Zig](https://ziglang.org/) 等项目。
+
+网易云适配和音源预取方案的早期调研还参考了 [Suxiaoqinx/Netease_url](https://github.com/Suxiaoqinx/Netease_url)、[taurusxin/ncmdump](https://github.com/taurusxin/ncmdump)、[BetterNCM/LibFrontendPlay](https://github.com/BetterNCM/LibFrontendPlay)、[apoint123/inflink-rs](https://github.com/apoint123/inflink-rs) 和 [BetterNCM 的历史源码](https://github.com/std-microblock/chromatic/tree/v2)。其中 `Netease_url` 为播放地址请求和音频读入内存提供了研究线索；当前程序通过已登录的网易云客户端正常播放链路取得音源，没有接入第三方解析服务。具体参考范围见 [开发参考项目记录](docs/REFERENCE_PROJECTS.md)。
+
+**完整的版本、用途、上游作者、许可、修改情况与参考来源见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)**，其中还列出 NumPy wheel 和编译工具带入的运行库。调研项目与实际打包依赖分别说明，各项目的版权和许可归其原作者所有。
 
 欢迎通过 Issue 分享复现条件、通过 Pull Request 改善策略或兼容性。涉及第三方代码的提交，请同时标注原始来源和许可。

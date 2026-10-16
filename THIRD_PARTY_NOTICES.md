@@ -51,6 +51,22 @@ Rubber Band 的上游源码包还附带可选组件。本仓库保留源码及�
 
 ## 开发阶段参考及可选兼容路径
 
+### 网易云生态参考项目（2026-10-16 补充）
+
+以下关系来自本项目 2026-10-02 的历史开发记录，许可于 2026-10-16 对照上游文件核实。历史记录没有保存调研时的完整提交 SHA，因此不把当前上游状态冒称为当时的固定版本。这些项目属于调研、设计思路或候选方案参考，不是本版的打包库或解析服务依赖；详见 [参考记录](docs/REFERENCE_PROJECTS.md)。
+
+| 参考项目 | 原作者 / 维护者与上游许可 | 本项目参考的内容与采用范围 |
+| --- | --- | --- |
+| [Suxiaoqinx/Netease_url](https://github.com/Suxiaoqinx/Netease_url) | Suxiaoqinx；[MIT](https://github.com/Suxiaoqinx/Netease_url/blob/main/LICENSE)，上游声明 Copyright (c) 2024 Suxiaoqinx | 研究 `get_song_url()` 和 `download_music_to_memory()` 的播放地址请求及音频内存读取思路。当前实现沿用网易云客户端正常播放 / 音质权限链路和 Range 请求；未接入其解析服务，未打包其请求封装或下载器。 |
+| [taurusxin/ncmdump](https://github.com/taurusxin/ncmdump) | taurusxin 维护；[MIT](https://github.com/taurusxin/ncmdump/blob/main/LICENSE.txt)。上游 README 追溯至已删除的 `anonymous5l/ncmdump` 原项目；LICENSE 的版权行保留占位符，此处不另行推定年份或姓名 | 评估已有 NCM 文件转换方案。其文件解密 / 转换路径未用于当前在线预取，没有集成 NCM 解密器。 |
+| [BetterNCM/LibFrontendPlay](https://github.com/BetterNCM/LibFrontendPlay) | manifest 标注作者 MicroBlock；上游 [GPL v3](https://github.com/BetterNCM/LibFrontendPlay/blob/main/LICENSE) | 前端播放与网易云播放流程衔接的架构线索；当前程序没有加载该插件或其前端播放器实现。 |
+| [apoint123/inflink-rs](https://github.com/apoint123/inflink-rs) | apoint123 及上游贡献者；[GPL v3](https://github.com/apoint123/inflink-rs/blob/main/LICENSE) | 读取播放信息、媒体控制与附近客户端版本适配的可行性参考；没有集成其 Rust / SMTC / Discord RPC 模块。 |
+| [BetterNCM 历史源码（chromatic 的 v2 分支）](https://github.com/std-microblock/chromatic/tree/v2) | MicroBlock / std-microblock 及贡献者；历史分支 [GPL v3](https://github.com/std-microblock/chromatic/blob/v2/LICENSE) | 网易云插件生态与客户端可扩展性研究。原仓库现为 chromatic；此处 GPL 标注只指已核实的 BetterNCM 历史分支，不推定 chromatic 当前其他代码的许可。未集成其注入器或插件加载器。 |
+
+上游公开源码与各自线上产品的权利范围也可能不同。例如 Netease_url 的 README 将其 MIT 仓库代码与另行开发的闭源在线体验区分；本项目的参考范围是公开源码，不表示取得或使用其线上服务的授权。致谢本身不替代未来复制、修改或再分发第三方代码时应履行的许可要求。
+
+### 其他开发工具与协议参考
+
 | 来源 | 关系与边界 |
 | --- | --- |
 | [FFmpeg](https://ffmpeg.org/) 的 [Rubber Band 滤镜](https://ffmpeg.org/ffmpeg-filters.html#rubberband) | 参考其变速选项含义，早期原型用 FFmpeg 管道处理。本源码保留可显式指定 FFmpeg 的开发路径；公开单文件版使用 Media Foundation 和直接 Rubber Band C API，不打包 FFmpeg。若自行启用或再打包 FFmpeg，需按所用构建的实际许可处理。 |
