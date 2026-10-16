@@ -1,0 +1,11 @@
+* text=auto eol=lf
+*.py text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.cjs text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.cs text eol=lf
+*.c text eol=lf
+*.cpp text eol=lf
+*.ico binary

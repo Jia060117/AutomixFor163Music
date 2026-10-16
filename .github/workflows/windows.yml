@@ -1,0 +1,28 @@
+name: Windows build and synthetic tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-python@v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Prepare locked build dependencies
+        run: python tools/bootstrap.py
+      - name: Compile native libraries from source
+        run: python tools/build_native.py
+      - name: Synthetic regression tests
+        run: python tools/test.py
+      - name: Package Windows x64 application
+        run: python tools/build.py
+      - uses: actions/upload-artifact@v7.0.2
+        with:
+          name: AutomixFor163Music-windows-x64
+          path: dist/
